@@ -1,0 +1,2 @@
+# BREADY
+Break READs redundancY
