@@ -54,11 +54,11 @@ echo  "	-c: use short_read_connector_counter (SRC_counter)"
 bank_set=""
 query_set=""
 kmer_size=31
-abundance_min=2
+abundance_min=1
 gamma=5
-fingerprint_size=32
+fingerprint_size=8
 kmer_threshold=100
-core_used=4
+core_used=0
 prefix="short_read_connector_res"
 remove=1
 diskMode=0

@@ -58,7 +58,7 @@ struct FunctorIndexer{
 	}
 
 	void operator() (Sequence& seq){
-		if(not valid_sequence(seq,kmer_size)){return;}
+		//~ if(not valid_sequence(seq,kmer_size)){return;}
 		Kmer<KMER_SPAN(1)>::ModelCanonical model (kmer_size);
 		Kmer<KMER_SPAN(1)>::ModelCanonical::Iterator itKmer (model);
 		itKmer.setData (seq.getData());
@@ -131,61 +131,41 @@ public:
 
 //        if(repeated_kmers(model, *itKmer)){return;}
         u_int i=0; // position on the read
-        bool print(false);
-		for (itKmer->first(); !itKmer->isDone(); itKmer->next()){
+        bool print(false),first(true),empty(false);
+		for (itKmer->first(); not itKmer->isDone() and not empty; itKmer->next()){
 			quasiDico->get_value((*itKmer)->value().getVal(),exists,associated_read_ids);
-			//~ if(possibleIncluers.empty()){
-				//~ for(auto &read_id: associated_read_ids){
-					//~ possibleIncluers.insert(read_id);
-				//~ }
-			//~ }else{
-				//~ if(possibleIncluers.size()==1){
-					//~ //NOINCLUERS
-					//~ similar_read_ids_position_count={};
-					//~ break;
-				//~ }else{
-					//~ for(auto &read_id: associated_read_ids){
-						//~ if(possibleIncluers.count(read_id)==1){
-							//~ temp.insert(read_id);
-						//~ }
-					//~ }
-					//~ possibleIncluers=temp;
-				//~ }
-			//~ }
-			if(not exists){print=true;break;}
+			//~ if(not exists){print=true;break;}
 			for(auto &read_id: associated_read_ids){
-				//~ if(possibleIncluers.count(read_id)==0){
-					//~ continue;
-				//~ }
 				std::unordered_map<u_int32_t, std::pair <u_int,u_int>>::const_iterator element = similar_read_ids_position_count.find(read_id);
 				if(element == similar_read_ids_position_count.end()) {// not inserted yet:
-					similar_read_ids_position_count[read_id]=std::make_pair(i, kmer_size);
+					//~ if(first){
+						similar_read_ids_position_count[read_id]=std::make_pair(i, kmer_size);
+					//~ }
 				}else{  // a kmer is already shared with this read
 					std::pair <int,int> lastpos_spankmer = (element->second);
                     // update spanning, up to a kmer size
-                    if ((i-lastpos_spankmer.first)<kmer_size){
-						lastpos_spankmer.second += i-lastpos_spankmer.first;
+                    if ((i-lastpos_spankmer.first)==1){
+						lastpos_spankmer.second += 1;
+						lastpos_spankmer.first=i;                                            // update last position of a shared kmer with this read
+						similar_read_ids_position_count[read_id] = lastpos_spankmer;
                     }else{
-						lastpos_spankmer.second += kmer_size;
+						//~ lastpos_spankmer.second += kmer_size;
+						similar_read_ids_position_count.erase(read_id);
 					}
-                    lastpos_spankmer.first=i;                                            // update last position of a shared kmer with this read
-                    similar_read_ids_position_count[read_id] = lastpos_spankmer;
 				}
+			}
+			first=false;
+			if(similar_read_ids_position_count.size()==1){
+				empty=true;
 			}
 			++i;
 		}
-		string toPrint;
 		if(not print){
 			print=true;
 			bool read_id_printed=false; // Print (and sync file) only if the read is similar to something.
-			//~ cout<<"test"<<endl;
-			//~ cin.get();
 			for (auto &matched_read:similar_read_ids_position_count){
 				float percentage_span_kmer = 100*std::get<1>(matched_read.second)/float(seq.getDataSize());
-				//~ cout<<percentage_span_kmer<<endl;
 				if (percentage_span_kmer >= threshold){
-					//~ cout<<std::get<0>(matched_read)<<" "<<seq.getIndex()+1<<endl;
-					//~ exit(0);
 					if(std::get<0>(matched_read)!=seq.getIndex()+1){
 						print=false;
 						break;
@@ -197,7 +177,6 @@ public:
             synchro->lock();
             fwrite(">A\n", sizeof(char), 3, outFile);
             fwrite((seq.toString() +'\n').c_str(), sizeof(char), seq.toString().size()+1, outFile);
-//			fwrite("\n", sizeof(char), 1, outFile);
 			synchro->unlock ();
 		}
 	}
@@ -214,9 +193,6 @@ void SRC_linker_ram::parse_query_sequences (int threshold, const int nbCores){
 	cout<<"Query "<<kmer_size<<"-mers from bank "<<getInput()->getStr(STR_URI_QUERY_INPUT)<<endl;
 	FILE * outFile;
 	outFile = fopen (getInput()->getStr(STR_OUT_FILE).c_str(), "wb");
-    //~ string message("#query_read_id [target_read_id-kmer_span (k="+to_string(kmer_size)+")-kmer_span query percentage]* or U (unvalid read, containing not only ACGT characters or low complexity read)\n"+"#Target read set: "+getInput()->getStr(STR_URI_BANK_INPUT)+"\n");
-    //~ fwrite((message).c_str(), sizeof(char), message.size(), outFile);
-
 
     for( int bank_id=0;bank_id<number_of_read_sets;bank_id++){ // iterate each bank
 
