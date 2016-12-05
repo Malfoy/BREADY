@@ -138,9 +138,9 @@ public:
 			for(auto &read_id: associated_read_ids){
 				std::unordered_map<u_int32_t, std::pair <u_int,u_int>>::const_iterator element = similar_read_ids_position_count.find(read_id);
 				if(element == similar_read_ids_position_count.end()) {// not inserted yet:
-					//~ if(first){
+					if(first){
 						similar_read_ids_position_count[read_id]=std::make_pair(i, kmer_size);
-					//~ }
+					}
 				}else{  // a kmer is already shared with this read
 					std::pair <int,int> lastpos_spankmer = (element->second);
                     // update spanning, up to a kmer size
@@ -164,8 +164,9 @@ public:
 			print=true;
 			bool read_id_printed=false; // Print (and sync file) only if the read is similar to something.
 			for (auto &matched_read:similar_read_ids_position_count){
-				float percentage_span_kmer = 100*std::get<1>(matched_read.second)/float(seq.getDataSize());
-				if (percentage_span_kmer >= threshold){
+				//~ float percentage_span_kmer = 100*std::get<1>(matched_read.second)/float(seq.getDataSize());
+				//~ if (percentage_span_kmer >= threshold){
+				if(std::get<1>(matched_read.second)==seq.getDataSize()){
 					if(std::get<0>(matched_read)!=seq.getIndex()+1){
 						print=false;
 						break;
