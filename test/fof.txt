@@ -1,2 +1,0 @@
-../data/c2.fasta.gz
-../data/c1.fasta.gz
